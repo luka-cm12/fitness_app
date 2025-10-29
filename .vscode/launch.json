@@ -1,0 +1,39 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Backend",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/server.js",
+      "env": {
+        "NODE_ENV": "development"
+      },
+      "console": "integratedTerminal",
+      "restart": true,
+      "runtimeArgs": ["--inspect"]
+    },
+    {
+      "name": "Flutter Web",
+      "type": "dart",
+      "request": "launch",
+      "program": "${workspaceFolder}/fitness_app/lib/main.dart",
+      "args": ["-d", "chrome", "--web-port=3001"],
+      "cwd": "${workspaceFolder}/fitness_app"
+    },
+    {
+      "name": "Flutter Mobile",
+      "type": "dart",
+      "request": "launch",
+      "program": "${workspaceFolder}/fitness_app/lib/main.dart",
+      "cwd": "${workspaceFolder}/fitness_app"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Launch Full Stack",
+      "configurations": ["Launch Backend", "Flutter Web"],
+      "stopAll": true
+    }
+  ]
+}

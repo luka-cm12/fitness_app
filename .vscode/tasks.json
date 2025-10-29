@@ -1,0 +1,111 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Backend Server",
+      "type": "shell",
+      "command": "npm run dev",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "isBackground": true,
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new",
+        "showReuseMessage": true,
+        "clear": false
+      }
+    },
+    {
+      "label": "Start Backend Production",
+      "type": "shell",
+      "command": "npm start",
+      "group": "build",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Install Backend Dependencies",
+      "type": "shell",
+      "command": "npm install",
+      "group": "build",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Seed Database",
+      "type": "shell",
+      "command": "npm run seed",
+      "group": "build",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Tests",
+      "type": "shell",
+      "command": "npm test",
+      "group": "test",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Get Dependencies",
+      "type": "shell",
+      "command": "flutter pub get",
+      "group": "build",
+      "options": {
+        "cwd": "${workspaceFolder}/fitness_app"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Build Runner",
+      "type": "shell",
+      "command": "flutter packages pub run build_runner build --delete-conflicting-outputs",
+      "group": "build",
+      "options": {
+        "cwd": "${workspaceFolder}/fitness_app"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Run Web",
+      "type": "shell",
+      "command": "flutter run -d chrome --web-port=3001",
+      "group": "build",
+      "isBackground": true,
+      "options": {
+        "cwd": "${workspaceFolder}/fitness_app"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Full Stack",
+      "dependsOrder": "parallel",
+      "dependsOn": [
+        "Start Backend Server",
+        "Flutter: Run Web"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    }
+  ]
+}
