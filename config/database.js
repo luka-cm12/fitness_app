@@ -336,6 +336,17 @@ export const initializeDatabase = () => {
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
       )`);
 
+      // Password reset tokens
+      db.run(`CREATE TABLE IF NOT EXISTS password_reset_tokens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        token TEXT UNIQUE NOT NULL,
+        expires_at DATETIME NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        used_at DATETIME,
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+      )`);
+
       // Create indexes for better performance
       db.run("CREATE INDEX IF NOT EXISTS idx_users_email ON users (email)");
       db.run("CREATE INDEX IF NOT EXISTS idx_users_type ON users (user_type)");
@@ -347,8 +358,14 @@ export const initializeDatabase = () => {
       db.run("CREATE INDEX IF NOT EXISTS idx_messages_recipient ON messages (recipient_id, is_read)");
       db.run("CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications (user_id, is_read)");
       db.run("CREATE INDEX IF NOT EXISTS idx_food_analysis_user_date ON food_analysis_history (user_id, created_at)");
+      db.run("CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token ON password_reset_tokens (token)");
+      db.run("CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_expires ON password_reset_tokens (expires_at)");
 
       resolve();
     });
   });
 };
+
+// Export database as default and named export for compatibility
+export const database = db;
+export default db;

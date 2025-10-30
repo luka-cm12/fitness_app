@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:riverpod/src/framework.dart';
 
 import '../../../../core/models/user_model.dart';
 import '../../../../core/providers/auth_provider.dart';
@@ -27,9 +28,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   void _handleLogin() async {
     if (_formKey.currentState!.validate()) {
-      await ref
-          .read(authStateProvider.notifier)
-          .login(_emailController.text.trim(), _passwordController.text);
+      try {
+        await AuthStateService.login(
+            ref, _emailController.text.trim(), _passwordController.text);
+        // Navigation will be handled by router
+      } catch (error) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Login failed: $error')),
+          );
+        }
+      }
     }
   }
 
@@ -60,7 +69,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       const SizedBox(height: 24),
                       Text(
                         'Fitness SaaS',
-                        style: Theme.of(context).textTheme.headlineMedium
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium
                             ?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: const Color(0xFF6C63FF),
@@ -71,8 +82,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       Text(
                         'Entre na sua conta',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Colors.grey[600],
-                        ),
+                              color: Colors.grey[600],
+                            ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 32),
@@ -173,4 +184,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       ),
     );
   }
+}
+
+extension on Provider<AsyncValue<User?>> {
+  ProviderListenable? get notifier => null;
 }

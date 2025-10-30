@@ -38,18 +38,23 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
   void _handleRegister() async {
     if (_formKey.currentState!.validate()) {
-      await ref
-          .read(authStateProvider.notifier)
-          .register(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-            firstName: _firstNameController.text.trim(),
-            lastName: _lastNameController.text.trim(),
-            userType: _selectedUserType,
-            phone: _phoneController.text.trim().isEmpty
-                ? null
-                : _phoneController.text.trim(),
+      try {
+        await AuthStateService.register(
+          ref,
+          _firstNameController.text.trim(),
+          _lastNameController.text.trim(),
+          _emailController.text.trim(),
+          _passwordController.text,
+          _selectedUserType,
+        );
+        // Navigation will be handled by router based on auth state
+      } catch (error) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Registration failed: $error')),
           );
+        }
+      }
     }
   }
 
@@ -79,7 +84,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       // Title
                       Text(
                         'Criar Conta',
-                        style: Theme.of(context).textTheme.headlineMedium
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium
                             ?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: const Color(0xFF6C63FF),
@@ -90,8 +97,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       Text(
                         'Preencha os dados abaixo',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Colors.grey[600],
-                        ),
+                              color: Colors.grey[600],
+                            ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 32),

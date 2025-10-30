@@ -111,9 +111,17 @@ class ProfilePage extends ConsumerWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () async {
-                      await ref.read(authStateProvider.notifier).logout();
-                      if (context.mounted) {
-                        context.go('/auth/login');
+                      try {
+                        await AuthStateService.logout(ref);
+                        if (context.mounted) {
+                          context.go('/auth/login');
+                        }
+                      } catch (error) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Logout failed: $error')),
+                          );
+                        }
                       }
                     },
                     style: ElevatedButton.styleFrom(

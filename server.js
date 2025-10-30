@@ -18,6 +18,7 @@ import nutritionRoutes from './routes/nutrition.js';
 import subscriptionRoutes from './routes/subscriptions.js';
 import analyticsRoutes from './routes/analytics.js';
 import paymentRoutes from './routes/payments.js';
+import passwordResetRoutes from './routes/password-reset.js';
 
 // Middleware imports
 import { errorHandler } from './middleware/errorHandler.js';
@@ -94,6 +95,7 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/password-reset', passwordResetRoutes);
 app.use('/api/users', authenticateToken, userRoutes);
 app.use('/api/trainers', authenticateToken, trainerRoutes);
 app.use('/api/athletes', authenticateToken, athleteRoutes);

@@ -294,6 +294,79 @@ class EmailService {
         `;
     }
   }
+
+  // Send password reset email
+  static async sendPasswordResetEmail(userEmail, userName, resetToken) {
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3001'}/#/reset-password/${resetToken}`;
+    
+    const msg = {
+      to: userEmail,
+      from: {
+        email: this.FROM_EMAIL,
+        name: this.FROM_NAME,
+      },
+      subject: '🔐 Redefinição de Senha - Fitness SaaS',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #E53E3E 0%, #C53030 100%); padding: 40px; text-align: center; color: white;">
+            <h1 style="margin: 0; font-size: 32px;">🔐 Redefinição de Senha</h1>
+            <p style="margin: 10px 0 0 0; font-size: 18px;">Fitness SaaS</p>
+          </div>
+          
+          <div style="padding: 40px 30px; background: #f8f9fa;">
+            <h2 style="color: #333; margin-bottom: 20px;">Olá ${userName || 'Usuário'}!</h2>
+            
+            <p style="color: #666; line-height: 1.6; font-size: 16px;">
+              Recebemos uma solicitação para redefinir a senha da sua conta no <strong>Fitness SaaS</strong>.
+            </p>
+            
+            <div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
+              <p style="color: #856404; margin: 0; line-height: 1.6;">
+                <strong>🔒 Importante:</strong> Este link é válido por apenas 1 hora por motivos de segurança.
+              </p>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetUrl}" 
+                 style="background: #E53E3E; color: white; padding: 15px 30px; 
+                        text-decoration: none; border-radius: 5px; font-weight: bold;
+                        display: inline-block;">
+                Redefinir Minha Senha
+              </a>
+            </div>
+            
+            <div style="background: #f8d7da; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc3545;">
+              <h3 style="color: #721c24; margin-top: 0;">⚠️ Não solicitou esta alteração?</h3>
+              <p style="color: #721c24; margin-bottom: 0; line-height: 1.6;">
+                Se você não solicitou a redefinição de senha, ignore este email. 
+                Sua senha permanecerá inalterada e segura.
+              </p>
+            </div>
+            
+            <div style="border-top: 1px solid #ddd; padding-top: 20px; margin-top: 30px;">
+              <p style="color: #888; font-size: 14px; text-align: center; margin: 0;">
+                Este email foi enviado automaticamente. Por favor, não responda.
+              </p>
+              <p style="color: #888; font-size: 14px; text-align: center; margin: 10px 0 0 0;">
+                © ${new Date().getFullYear()} Fitness SaaS. Todos os direitos reservados.
+              </p>
+            </div>
+          </div>
+        </div>
+      `,
+    };
+
+    try {
+      await sgMail.send(msg);
+      console.log(`Password reset email sent to ${userEmail}`);
+    } catch (error) {
+      console.error('Error sending password reset email:', error);
+      throw new Error('Falha ao enviar email de redefinição de senha');
+    }
+  }
 }
 
+// Export methods for compatibility
+export const sendEmail = EmailService.sendPasswordResetEmail;
+export const sendPasswordResetEmail = EmailService.sendPasswordResetEmail;
 export default EmailService;

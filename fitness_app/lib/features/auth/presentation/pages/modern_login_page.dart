@@ -207,15 +207,8 @@ class _ModernLoginPageState extends ConsumerState<ModernLoginPage>
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
-                              onPressed: () {
-                                // TODO: Implementar recuperação de senha
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                        'Funcionalidade em desenvolvimento'),
-                                  ),
-                                );
-                              },
+                              onPressed: () =>
+                                  context.push('/auth/forgot-password'),
                               child: const Text('Esqueci minha senha'),
                             ),
                           ),

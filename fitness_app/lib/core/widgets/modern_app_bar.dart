@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/providers/auth_provider.dart';
+import '../providers/auth_provider.dart';
 
 class ModernAppBar extends ConsumerWidget implements PreferredSizeWidget {
   final String title;
