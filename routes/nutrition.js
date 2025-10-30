@@ -2,8 +2,254 @@ import express from 'express';
 import { body, param, query, validationResult } from 'express-validator';
 import { db } from '../config/database.js';
 import { requireRole } from '../middleware/auth.js';
+import multer from 'multer';
+import foodAnalysisService from '../services/foodAnalysisService.js';
+import aiFoodAnalysisService from '../services/aiFoodAnalysisService.js';
 
 const router = express.Router();
+
+// Configuração do multer para upload de imagens
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Apenas arquivos de imagem são permitidos'), false);
+    }
+  }
+});
+
+/**
+ * @swagger
+ * /api/nutrition/analyze-food-image:
+ *   post:
+ *     summary: Analyze food image and calculate nutritional information
+ *     tags: [Nutrition]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *                 description: Food image to analyze
+ *     responses:
+ *       200:
+ *         description: Food analysis results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     food_name:
+ *                       type: string
+ *                     confidence:
+ *                       type: number
+ *                     calories:
+ *                       type: number
+ *                     protein:
+ *                       type: number
+ *                     carbohydrates:
+ *                       type: number
+ *                     fat:
+ *                       type: number
+ *                     fiber:
+ *                       type: number
+ */
+// Rota de teste (sem autenticação)
+router.post('/analyze-food-image-test', upload.single('image'), async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Imagem é obrigatória'
+      });
+    }
+
+    // Analisa a imagem usando o serviço de IA
+    const analysis = await aiFoodAnalysisService.analyzeFood(req.file.buffer);
+    
+    if (!analysis.success) {
+      return res.status(400).json(analysis);
+    }
+
+    res.json({
+      success: true,
+      message: 'Análise concluída com sucesso',
+      data: analysis.data
+    });
+
+  } catch (error) {
+    console.error('Erro na análise de imagem:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: error.message
+    });
+  }
+});
+
+router.post('/analyze-food-image', upload.single('image'), async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Imagem é obrigatória'
+      });
+    }
+
+    // Analisa a imagem usando o serviço de IA
+    const analysis = await aiFoodAnalysisService.analyzeFood(req.file.buffer);
+    
+    if (!analysis.success) {
+      return res.status(400).json(analysis);
+    }
+
+    // Salva o histórico de análise no banco de dados
+    const historyQuery = `
+      INSERT INTO food_analysis_history 
+      (user_id, food_name, calories, protein, carbohydrates, fat, fiber, confidence, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+    `;
+
+    db.run(historyQuery, [
+      req.user.id,
+      analysis.data.food_name,
+      analysis.data.calories,
+      analysis.data.protein,
+      analysis.data.carbohydrates,
+      analysis.data.fat,
+      analysis.data.fiber,
+      analysis.data.confidence
+    ], function(err) {
+      if (err) {
+        console.error('Erro ao salvar histórico:', err);
+        // Não falha a requisição por erro no histórico
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'Análise concluída com sucesso',
+      data: analysis.data
+    });
+
+  } catch (error) {
+    console.error('Erro na análise de imagem:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/nutrition/food-search:
+ *   get:
+ *     summary: Search for food nutritional information
+ *     tags: [Nutrition]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Food name to search
+ */
+router.get('/food-search', async (req, res, next) => {
+  try {
+    const { q } = req.query;
+    
+    if (!q || q.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Parâmetro de busca é obrigatório'
+      });
+    }
+
+    const result = await foodAnalysisService.searchFoodNutrition(q.trim());
+    res.json(result);
+
+  } catch (error) {
+    console.error('Erro na busca de alimento:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/nutrition/analysis-history:
+ *   get:
+ *     summary: Get user's food analysis history
+ *     tags: [Nutrition]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Number of records to return
+ */
+router.get('/analysis-history', async (req, res, next) => {
+  try {
+    const limit = parseInt(req.query.limit) || 20;
+    
+    const historyQuery = `
+      SELECT id, food_name, calories, protein, carbohydrates, fat, fiber, 
+             confidence, created_at
+      FROM food_analysis_history 
+      WHERE user_id = ?
+      ORDER BY created_at DESC
+      LIMIT ?
+    `;
+
+    db.all(historyQuery, [req.user.id, limit], (err, rows) => {
+      if (err) {
+        console.error('Erro ao buscar histórico:', err);
+        return res.status(500).json({
+          success: false,
+          message: 'Erro ao buscar histórico'
+        });
+      }
+
+      res.json({
+        success: true,
+        data: rows || []
+      });
+    });
+
+  } catch (error) {
+    console.error('Erro ao buscar histórico:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: error.message
+    });
+  }
+});
 
 /**
  * @swagger

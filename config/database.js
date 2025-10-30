@@ -317,6 +317,25 @@ export const initializeDatabase = () => {
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
       )`);
 
+      // Food analysis history (for AI image analysis)
+      db.run(`CREATE TABLE IF NOT EXISTS food_analysis_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        food_name TEXT NOT NULL,
+        confidence REAL,
+        calories REAL,
+        protein REAL,
+        carbohydrates REAL,
+        fat REAL,
+        fiber REAL,
+        serving_size TEXT,
+        ingredients TEXT,
+        tips TEXT,
+        image_path TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+      )`);
+
       // Create indexes for better performance
       db.run("CREATE INDEX IF NOT EXISTS idx_users_email ON users (email)");
       db.run("CREATE INDEX IF NOT EXISTS idx_users_type ON users (user_type)");
@@ -327,6 +346,7 @@ export const initializeDatabase = () => {
       db.run("CREATE INDEX IF NOT EXISTS idx_food_logs_athlete_date ON food_logs (athlete_id, logged_at)");
       db.run("CREATE INDEX IF NOT EXISTS idx_messages_recipient ON messages (recipient_id, is_read)");
       db.run("CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications (user_id, is_read)");
+      db.run("CREATE INDEX IF NOT EXISTS idx_food_analysis_user_date ON food_analysis_history (user_id, created_at)");
 
       resolve();
     });

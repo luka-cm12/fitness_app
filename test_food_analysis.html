@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Análise Nutricional</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .upload-area:hover {
+            border-color: #007bff;
+            background-color: #f8f9fa;
+        }
+        .upload-area.dragover {
+            border-color: #007bff;
+            background-color: #e3f2fd;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 5px;
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+        .error {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+        .success {
+            background: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        .nutrient-card {
+            display: inline-block;
+            margin: 10px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            min-width: 120px;
+        }
+        .nutrient-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .nutrient-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .tips {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff3cd;
+            border-radius: 5px;
+            border-left: 4px solid #ffc107;
+        }
+        .tip-item {
+            margin: 5px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        .tip-item::before {
+            content: "💡";
+            position: absolute;
+            left: 0;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍽️ Teste - Análise Nutricional por Foto</h1>
+        <p>Selecione uma foto de comida para analisar as informações nutricionais.</p>
+        
+        <div class="upload-area" id="uploadArea">
+            <p>📷 Clique aqui ou arraste uma foto do seu prato</p>
+            <input type="file" id="fileInput" accept="image/*" style="display: none;">
+        </div>
+        
+        <button id="analyzeBtn" disabled>Analisar Foto</button>
+        <button id="clearBtn" onclick="clearResults()">Limpar</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const resultDiv = document.getElementById('result');
+        let selectedFile = null;
+
+        // Event listeners
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('drop', handleDrop);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+        fileInput.addEventListener('change', handleFileSelect);
+        analyzeBtn.addEventListener('click', analyzeImage);
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showError('Por favor, selecione apenas arquivos de imagem.');
+                return;
+            }
+
+            selectedFile = file;
+            analyzeBtn.disabled = false;
+            
+            // Preview da imagem
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                uploadArea.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview" style="max-height: 200px;">
+                    <p>Arquivo selecionado: ${file.name}</p>
+                `;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function analyzeImage() {
+            if (!selectedFile) {
+                showError('Por favor, selecione uma imagem primeiro.');
+                return;
+            }
+
+            analyzeBtn.disabled = true;
+            showLoading();
+
+            try {
+                const formData = new FormData();
+                formData.append('image', selectedFile);
+
+                const response = await fetch('http://localhost:3000/api/nutrition/analyze-food-image-test', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showResult(data.data);
+                } else {
+                    showError(data.message || 'Erro na análise da imagem');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                showError('Erro de conexão com o servidor: ' + error.message);
+            } finally {
+                analyzeBtn.disabled = false;
+            }
+        }
+
+        function showLoading() {
+            resultDiv.innerHTML = `
+                <div class="loading">
+                    <h3>🔄 Analisando sua imagem...</h3>
+                    <p>Isso pode levar alguns segundos...</p>
+                </div>
+            `;
+        }
+
+        function showResult(analysis) {
+            resultDiv.innerHTML = `
+                <div class="result success">
+                    <h3>✅ Análise Concluída!</h3>
+                    
+                    <h4>📋 ${analysis.food_name}</h4>
+                    <p><strong>Confiança:</strong> ${(analysis.confidence * 100).toFixed(0)}%</p>
+                    <p><strong>Porção:</strong> ${analysis.serving_size}</p>
+                    
+                    <div style="margin: 20px 0;">
+                        <div class="nutrient-card">
+                            <div class="nutrient-value">${analysis.calories}</div>
+                            <div class="nutrient-label">Calorias</div>
+                        </div>
+                        <div class="nutrient-card">
+                            <div class="nutrient-value">${analysis.protein.toFixed(1)}g</div>
+                            <div class="nutrient-label">Proteína</div>
+                        </div>
+                        <div class="nutrient-card">
+                            <div class="nutrient-value">${analysis.carbohydrates.toFixed(1)}g</div>
+                            <div class="nutrient-label">Carboidratos</div>
+                        </div>
+                        <div class="nutrient-card">
+                            <div class="nutrient-value">${analysis.fat.toFixed(1)}g</div>
+                            <div class="nutrient-label">Gordura</div>
+                        </div>
+                        <div class="nutrient-card">
+                            <div class="nutrient-value">${analysis.fiber.toFixed(1)}g</div>
+                            <div class="nutrient-label">Fibra</div>
+                        </div>
+                    </div>
+                    
+                    ${analysis.tips && analysis.tips.length > 0 ? `
+                        <div class="tips">
+                            <h4>💡 Dicas Nutricionais:</h4>
+                            ${analysis.tips.map(tip => `<div class="tip-item">${tip}</div>`).join('')}
+                        </div>
+                    ` : ''}
+                    
+                    ${analysis.ingredients && analysis.ingredients.length > 0 ? `
+                        <div style="margin-top: 20px;">
+                            <h4>🥘 Ingredientes Detectados:</h4>
+                            <ul>
+                                ${analysis.ingredients.map(ingredient => 
+                                    `<li>${ingredient.name} - ${ingredient.calories} cal</li>`
+                                ).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function showError(message) {
+            resultDiv.innerHTML = `
+                <div class="result error">
+                    <h3>❌ Erro</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+
+        function clearResults() {
+            selectedFile = null;
+            analyzeBtn.disabled = true;
+            resultDiv.innerHTML = '';
+            uploadArea.innerHTML = '<p>📷 Clique aqui ou arraste uma foto do seu prato</p>';
+            fileInput.value = '';
+        }
+    </script>
+</body>
+</html>

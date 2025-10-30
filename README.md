@@ -19,6 +19,7 @@ Sistema SaaS completo para gestão de treinos personalizados, desenvolvido para 
 - **Email**: SendGrid (Transacional)
 - **Analytics**: Dashboard avançado com métricas em tempo real
 - **API**: RESTful com documentação Swagger
+- **🤖 IA Integrada**: OpenAI GPT-4 Vision, Google Vision, Clarifai para análise nutricional
 
 ## 🎯 **FUNCIONALIDADES AVANÇADAS IMPLEMENTADAS**
 
@@ -85,6 +86,16 @@ Sistema SaaS completo para gestão de treinos personalizados, desenvolvido para 
 - Planejamento de refeições
 - Acompanhamento de ingestão alimentar
 - Relatórios nutricionais
+- **🤖 ANÁLISE NUTRICIONAL POR IA**: Tire fotos dos pratos e receba informações nutricionais completas
+
+### 🤖 **IA para Análise Nutricional** (NOVO!)
+- ✅ **Reconhecimento de alimentos** por foto usando múltiplas APIs de IA
+- ✅ **Cálculo automático** de calorias, proteínas, carboidratos, gorduras e fibras
+- ✅ **Identificação de ingredientes** com precisão avançada
+- ✅ **Dicas nutricionais personalizadas** baseadas na análise
+- ✅ **Histórico de análises** para acompanhamento
+- ✅ **Sistema de cascata** com fallback inteligente
+- ✅ **APIs suportadas**: OpenAI GPT-4 Vision, Google Vision, Clarifai
 
 ## 📁 Estrutura do Projeto
 

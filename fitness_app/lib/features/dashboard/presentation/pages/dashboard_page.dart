@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/models/user_model.dart';
 import '../../../../core/providers/auth_provider.dart';
+import '../../../../core/widgets/modern_app_bar.dart';
 import '../widgets/bottom_navigation.dart';
 
 class DashboardPage extends ConsumerWidget {
@@ -11,69 +12,43 @@ class DashboardPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authStateProvider);
+    final user = ref.watch(authProvider);
 
-    return authState.when(
-      data: (user) {
-        if (user == null) return const SizedBox();
-
-        return Scaffold(
-          appBar: AppBar(
-            title: Text('Olá, ${user.firstName}!'),
-            actions: [
-              IconButton(
-                onPressed: () => context.go('/profile'),
-                icon: CircleAvatar(
-                  radius: 16,
-                  backgroundImage: user.profileImage != null
-                      ? NetworkImage(user.profileImage!)
-                      : null,
-                  child: user.profileImage == null
-                      ? Text(user.firstName.substring(0, 1).toUpperCase())
-                      : null,
-                ),
-              ),
-            ],
-          ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Welcome Card
-                _buildWelcomeCard(context, user),
-                const SizedBox(height: 20),
-
-                // Stats Cards
-                _buildStatsSection(context, user.userType),
-                const SizedBox(height: 20),
-
-                // Quick Actions
-                _buildQuickActionsSection(context, user.userType),
-                const SizedBox(height: 20),
-
-                // Recent Activity
-                _buildRecentActivitySection(context, user.userType),
-              ],
-            ),
-          ),
-          bottomNavigationBar: const BottomNavigation(),
-        );
-      },
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, stack) => Scaffold(
+    if (user == null) {
+      return const Scaffold(
         body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error, size: 64, color: Colors.red),
-              const SizedBox(height: 16),
-              Text('Erro: $error'),
-            ],
-          ),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    return Scaffold(
+      appBar: ModernAppBar(
+        title: 'Olá, ${user.firstName}!',
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Welcome Card
+            _buildWelcomeCard(context, user),
+            const SizedBox(height: 20),
+
+            // Stats Cards
+            _buildStatsSection(context, user.userType),
+            const SizedBox(height: 20),
+
+            // Quick Actions
+            _buildQuickActionsSection(context, user.userType),
+            const SizedBox(height: 20),
+
+            // Recent Activity
+            _buildRecentActivitySection(context, user.userType),
+          ],
         ),
       ),
+      bottomNavigationBar: const BottomNavigation(),
     );
   }
 

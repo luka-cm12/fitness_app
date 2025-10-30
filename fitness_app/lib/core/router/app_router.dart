@@ -1,8 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
+import '../../features/auth/presentation/pages/user_type_selection_page.dart';
+import '../../features/auth/presentation/pages/athlete_register_page.dart';
+import '../../features/auth/presentation/pages/professional_register_page.dart';
+import '../../features/auth/presentation/pages/modern_login_page.dart';
+import '../../features/auth/presentation/pages/professional_pending_page.dart';
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/workouts/presentation/pages/workouts_page.dart';
 import '../../features/nutrition/presentation/pages/nutrition_page.dart';
@@ -10,16 +14,12 @@ import '../../features/profile/presentation/pages/profile_page.dart';
 import '../providers/auth_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
+  final user = ref.watch(authProvider);
 
   return GoRouter(
     initialLocation: '/',
     redirect: (context, state) {
-      final isAuthenticated = authState.when(
-        data: (user) => user != null,
-        loading: () => false,
-        error: (_, __) => false,
-      );
+      final isAuthenticated = user != null;
 
       final isAuthRoute = state.uri.toString().startsWith('/auth');
 
@@ -38,12 +38,32 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/auth/login',
         name: 'login',
-        builder: (context, state) => const LoginPage(),
+        builder: (context, state) => const ModernLoginPage(),
       ),
       GoRoute(
         path: '/auth/register',
         name: 'register',
         builder: (context, state) => const RegisterPage(),
+      ),
+      GoRoute(
+        path: '/auth/user-type-selection',
+        name: 'user-type-selection',
+        builder: (context, state) => const UserTypeSelectionPage(),
+      ),
+      GoRoute(
+        path: '/auth/register/athlete',
+        name: 'athlete-register',
+        builder: (context, state) => const AthleteRegisterPage(),
+      ),
+      GoRoute(
+        path: '/auth/register/professional',
+        name: 'professional-register',
+        builder: (context, state) => const ProfessionalRegisterPage(),
+      ),
+      GoRoute(
+        path: '/auth/professional-pending',
+        name: 'professional-pending',
+        builder: (context, state) => const ProfessionalPendingPage(),
       ),
 
       // Main App Routes
