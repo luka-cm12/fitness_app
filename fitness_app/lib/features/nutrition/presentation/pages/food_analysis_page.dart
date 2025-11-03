@@ -1,22 +1,22 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/models/food_analysis_model.dart';
-import '../../../../core/services/food_analysis_service.dart';
+import '../../providers/food_analysis_provider.dart';
 import '../widgets/bottom_navigation.dart';
 import 'food_analysis_result_page.dart';
 import 'food_analysis_history_page.dart';
 
-class FoodAnalysisPage extends StatefulWidget {
+class FoodAnalysisPage extends ConsumerStatefulWidget {
   const FoodAnalysisPage({super.key});
 
   @override
-  State<FoodAnalysisPage> createState() => _FoodAnalysisPageState();
+  ConsumerState<FoodAnalysisPage> createState() => _FoodAnalysisPageState();
 }
 
-class _FoodAnalysisPageState extends State<FoodAnalysisPage> {
+class _FoodAnalysisPageState extends ConsumerState<FoodAnalysisPage> {
   final ImagePicker _picker = ImagePicker();
-  final FoodAnalysisService _foodAnalysisService = FoodAnalysisService();
   bool _isAnalyzing = false;
 
   @override
@@ -272,8 +272,9 @@ class _FoodAnalysisPageState extends State<FoodAnalysisPage> {
     });
 
     try {
+      final foodAnalysisService = ref.read(foodAnalysisServiceProvider);
       final FoodAnalysisModel? analysis =
-          await _foodAnalysisService.analyzeFood(imageFile);
+          await foodAnalysisService.analyzeFood(imageFile);
 
       if (analysis != null && mounted) {
         Navigator.of(context).push(

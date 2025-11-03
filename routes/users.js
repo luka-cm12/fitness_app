@@ -1,6 +1,48 @@
 import express from 'express';
 import { body, param, query, validationResult } from 'express-validator';
 import { db } from '../config/database.js';
+import multer from 'multer';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import fs from 'fs';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = join(__dirname, '..', 'uploads', 'avatars');
+    
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    const ext = file.originalname.split('.').pop();
+    const filename = `${req.user.id}_${Date.now()}.${ext}`;
+    cb(null, filename);
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only image files are allowed!'), false);
+  }
+};
+
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  }
+});
 
 const router = express.Router();
 
@@ -172,6 +214,69 @@ router.put('/profile', [
       data: updatedUser
     });
   } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @swagger
+ * /api/users/upload-avatar:
+ *   post:
+ *     summary: Upload user avatar
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/upload-avatar', upload.single('avatar'), async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file uploaded'
+      });
+    }
+
+    // Generate URL for the uploaded file
+    const imageUrl = `/uploads/avatars/${req.file.filename}`;
+
+    // Update user profile with new image URL
+    await new Promise((resolve, reject) => {
+      db.run(
+        'UPDATE users SET profile_image = ?, updated_at = ? WHERE id = ?',
+        [imageUrl, new Date().toISOString(), req.user.id],
+        (err) => {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+
+    // Get updated user
+    const updatedUser = await new Promise((resolve, reject) => {
+      db.get(
+        `SELECT id, email, first_name, last_name, user_type, phone, profile_image, updated_at 
+         FROM users WHERE id = ?`,
+        [req.user.id],
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+
+    res.json({
+      success: true,
+      message: 'Avatar uploaded successfully',
+      data: {
+        profile_image: imageUrl,
+        user: updatedUser
+      }
+    });
+  } catch (error) {
+    // Remove uploaded file if database update fails
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
     next(error);
   }
 });

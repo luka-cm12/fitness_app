@@ -6,6 +6,11 @@ import '../../../../core/models/user_model.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/widgets/modern_app_bar.dart';
 import '../widgets/bottom_navigation.dart';
+import '../../../workouts/presentation/pages/athletes_management_page.dart';
+import '../../../workouts/presentation/pages/exercise_library_page.dart';
+import '../../../workouts/presentation/pages/trainer_reports_page.dart';
+import '../../../progress/presentation/pages/progress_page.dart';
+import '../../../nutrition/presentation/pages/nutrition_pages.dart';
 
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
@@ -232,30 +237,86 @@ class DashboardPage extends ConsumerWidget {
             Icons.restaurant,
             () => context.go('/nutrition'),
           ),
-          _buildActionCard('Progresso', Icons.trending_up, () {}),
-          _buildActionCard('Metas', Icons.flag, () {}),
+          _buildActionCard('Progresso', Icons.trending_up, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ProgressPage(),
+              ),
+            );
+          }),
+          _buildActionCard('Metas', Icons.flag, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const GoalsPage(),
+              ),
+            );
+          }),
         ];
       case UserType.trainer:
         return [
-          _buildActionCard('Meus Alunos', Icons.group, () {}),
+          _buildActionCard('Meus Alunos', Icons.group, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AthletesManagementPage(),
+              ),
+            );
+          }),
           _buildActionCard(
             'Criar Treino',
             Icons.add_circle,
             () => context.go('/workouts'),
           ),
-          _buildActionCard('Relatórios', Icons.analytics, () {}),
-          _buildActionCard('Biblioteca', Icons.library_books, () {}),
+          _buildActionCard('Relatórios', Icons.analytics, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const TrainerReportsPage(),
+              ),
+            );
+          }),
+          _buildActionCard('Biblioteca', Icons.library_books, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ExerciseLibraryPage(),
+              ),
+            );
+          }),
         ];
       case UserType.nutritionist:
         return [
-          _buildActionCard('Meus Clientes', Icons.group, () {}),
+          _buildActionCard('Meus Clientes', Icons.group, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const NutritionClientsPage(),
+              ),
+            );
+          }),
           _buildActionCard(
             'Planos',
             Icons.restaurant_menu,
             () => context.go('/nutrition'),
           ),
-          _buildActionCard('Alimentos', Icons.search, () {}),
-          _buildActionCard('Relatórios', Icons.analytics, () {}),
+          _buildActionCard('Alimentos', Icons.search, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const FoodDatabasePage(),
+              ),
+            );
+          }),
+          _buildActionCard('Relatórios', Icons.analytics, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const NutritionReportsPage(),
+              ),
+            );
+          }),
         ];
     }
   }

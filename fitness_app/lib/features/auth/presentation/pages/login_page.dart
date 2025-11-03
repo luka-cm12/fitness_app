@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:riverpod/src/framework.dart';
 
-import '../../../../core/models/user_model.dart';
 import '../../../../core/providers/auth_provider.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -184,8 +182,4 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       ),
     );
   }
-}
-
-extension on Provider<AsyncValue<User?>> {
-  ProviderListenable? get notifier => null;
 }

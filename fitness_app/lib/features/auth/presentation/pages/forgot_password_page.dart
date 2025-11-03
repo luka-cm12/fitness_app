@@ -382,40 +382,83 @@ class PasswordResetService {
   static const String baseUrl = 'http://localhost:3000/api/password-reset';
 
   static Future<void> sendResetEmail(String email) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/forgot-password'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email}),
-    );
+    try {
+      print('🔄 Sending reset email request to: $baseUrl/forgot-password');
+      final response = await http.post(
+        Uri.parse('$baseUrl/forgot-password'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({'email': email}),
+      );
 
-    if (response.statusCode != 200) {
-      final error = jsonDecode(response.body);
-      throw Exception(error['error'] ?? 'Erro ao enviar email');
+      print('📡 Response status: ${response.statusCode}');
+      print('📡 Response body: ${response.body}');
+
+      if (response.statusCode != 200) {
+        final error = jsonDecode(response.body);
+        throw Exception(
+            error['message'] ?? error['error'] ?? 'Erro ao enviar email');
+      }
+    } catch (e) {
+      print('❌ Error sending reset email: $e');
+      if (e.toString().contains('Failed to fetch') ||
+          e.toString().contains('XMLHttpRequest error')) {
+        throw Exception(
+            'Erro de conexão com o servidor. Verifique se o backend está rodando.');
+      }
+      rethrow;
     }
   }
 
   static Future<void> resetPassword(String token, String newPassword) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/reset-password'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'token': token,
-        'password': newPassword,
-      }),
-    );
+    try {
+      print('🔄 Resetting password with token: $token');
+      final response = await http.post(
+        Uri.parse('$baseUrl/reset-password'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'token': token,
+          'password': newPassword,
+        }),
+      );
 
-    if (response.statusCode != 200) {
-      final error = jsonDecode(response.body);
-      throw Exception(error['error'] ?? 'Erro ao redefinir senha');
+      print('📡 Response status: ${response.statusCode}');
+      print('📡 Response body: ${response.body}');
+
+      if (response.statusCode != 200) {
+        final error = jsonDecode(response.body);
+        throw Exception(
+            error['message'] ?? error['error'] ?? 'Erro ao redefinir senha');
+      }
+    } catch (e) {
+      print('❌ Error resetting password: $e');
+      if (e.toString().contains('Failed to fetch') ||
+          e.toString().contains('XMLHttpRequest error')) {
+        throw Exception(
+            'Erro de conexão com o servidor. Verifique se o backend está rodando.');
+      }
+      rethrow;
     }
   }
 
   static Future<bool> validateToken(String token) async {
     try {
+      print('🔄 Validating token: $token');
       final response = await http.get(
         Uri.parse('$baseUrl/reset-password/validate/$token'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
       );
+
+      print('📡 Validation response status: ${response.statusCode}');
+      print('📡 Validation response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -423,6 +466,7 @@ class PasswordResetService {
       }
       return false;
     } catch (error) {
+      print('❌ Error validating token: $error');
       return false;
     }
   }

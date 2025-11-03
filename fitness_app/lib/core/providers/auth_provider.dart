@@ -82,6 +82,30 @@ final authStateProvider = Provider<AsyncValue<User?>>((ref) {
   return AsyncValue.data(user);
 });
 
+// Auth state notifier for refresh functionality
+final authStateNotifierProvider = Provider<AuthStateHelper>((ref) {
+  return AuthStateHelper(ref);
+});
+
+class AuthStateHelper {
+  final Ref ref;
+
+  AuthStateHelper(this.ref);
+
+  Future<void> refreshUser() async {
+    ref.read(authLoadingProvider.notifier).state = true;
+    try {
+      final user = await AuthService.getCurrentUser();
+      ref.read(authProvider.notifier).state = user;
+    } catch (error) {
+      // Handle error
+      rethrow;
+    } finally {
+      ref.read(authLoadingProvider.notifier).state = false;
+    }
+  }
+}
+
 // Helper provider to get notifier-like object
 final authNotifierHelperProvider =
     Provider<MockAuthNotifier>((ref) => MockAuthNotifier(ref as WidgetRef));

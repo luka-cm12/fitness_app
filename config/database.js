@@ -310,11 +310,22 @@ export const initializeDatabase = () => {
         user_id INTEGER NOT NULL,
         title TEXT NOT NULL,
         message TEXT NOT NULL,
-        notification_type TEXT NOT NULL,
+        notification_type TEXT CHECK(notification_type IN (
+          'workout', 'nutrition', 'reminder', 'approval', 'system', 
+          'message', 'subscription', 'progress', 'achievement'
+        )) NOT NULL,
+        priority TEXT CHECK(priority IN ('low', 'medium', 'high', 'urgent')) DEFAULT 'medium',
         is_read BOOLEAN DEFAULT 0,
+        is_deleted BOOLEAN DEFAULT 0,
         action_url TEXT,
+        action_data TEXT, -- JSON data for actions
+        image_url TEXT,
+        expires_at DATETIME,
+        sender_id INTEGER, -- who sent the notification (if applicable)
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+        read_at DATETIME,
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+        FOREIGN KEY (sender_id) REFERENCES users (id) ON DELETE SET NULL
       )`);
 
       // Food analysis history (for AI image analysis)

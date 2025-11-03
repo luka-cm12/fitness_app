@@ -2,7 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { sendPasswordResetEmail } from '../services/emailService.js';
-import { database } from '../config/database.js';
+import { db } from '../config/database.js';
 const router = express.Router();
 
 // Gerar token de reset de senha
@@ -27,7 +27,7 @@ router.post('/forgot-password', async (req, res) => {
     `;
     
     const user = await new Promise((resolve, reject) => {
-      database.get(userQuery, [email], (err, row) => {
+      db.get(userQuery, [email], (err, row) => {
         if (err) reject(err);
         else resolve(row);
       });
@@ -52,7 +52,7 @@ router.post('/forgot-password', async (req, res) => {
     `;
 
     await new Promise((resolve, reject) => {
-      database.run(insertTokenQuery, [user.id, resetToken, expiresAt.toISOString()], function(err) {
+      db.run(insertTokenQuery, [user.id, resetToken, expiresAt.toISOString()], function(err) {
         if (err) reject(err);
         else resolve();
       });
@@ -124,7 +124,7 @@ router.post('/forgot-password', async (req, res) => {
       </div>
     `;
 
-    await sendPasswordResetEmail(email, user.name, token);
+    await sendPasswordResetEmail(email, `${user.first_name} ${user.last_name}`, resetUrl);
 
     console.log(`Password reset email sent to: ${email}`);
     
@@ -160,7 +160,7 @@ router.post('/reset-password', async (req, res) => {
     `;
 
     const tokenData = await new Promise((resolve, reject) => {
-      database.get(tokenQuery, [token], (err, row) => {
+      db.get(tokenQuery, [token], (err, row) => {
         if (err) reject(err);
         else resolve(row);
       });
@@ -182,7 +182,7 @@ router.post('/reset-password', async (req, res) => {
     `;
 
     await new Promise((resolve, reject) => {
-      database.run(updatePasswordQuery, [hashedPassword, tokenData.user_id], function(err) {
+      db.run(updatePasswordQuery, [hashedPassword, tokenData.user_id], function(err) {
         if (err) reject(err);
         else resolve();
       });
@@ -192,7 +192,7 @@ router.post('/reset-password', async (req, res) => {
     const deleteTokenQuery = `DELETE FROM password_reset_tokens WHERE token = ?`;
     
     await new Promise((resolve, reject) => {
-      database.run(deleteTokenQuery, [token], function(err) {
+      db.run(deleteTokenQuery, [token], function(err) {
         if (err) reject(err);
         else resolve();
       });
@@ -205,7 +205,7 @@ router.post('/reset-password', async (req, res) => {
     `;
     
     await new Promise((resolve, reject) => {
-      database.run(deleteOldTokensQuery, [tokenData.user_id], function(err) {
+      db.run(deleteOldTokensQuery, [tokenData.user_id], function(err) {
         if (err) reject(err);
         else resolve();
       });
@@ -233,7 +233,7 @@ router.get('/reset-password/validate/:token', async (req, res) => {
     `;
 
     const result = await new Promise((resolve, reject) => {
-      database.get(tokenQuery, [token], (err, row) => {
+      db.get(tokenQuery, [token], (err, row) => {
         if (err) reject(err);
         else resolve(row);
       });

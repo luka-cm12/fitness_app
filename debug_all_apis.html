@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - Todas as APIs</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .endpoint {
+            margin: 10px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .method {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .get { background: #28a745; }
+        .post { background: #007bff; }
+        .put { background: #ffc107; color: #000; }
+        .delete { background: #dc3545; }
+        button {
+            margin: 5px 0;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover { background: #0056b3; }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>🐛 Debug - Todas as APIs do Fitness App</h1>
+
+    <div class="container">
+        <h2>🏥 Health & System</h2>
+        
+        <div class="endpoint">
+            <span class="method get">GET</span> /health
+            <button onclick="testAPI('GET', '/health')">Testar</button>
+            <div id="result-health" class="result"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔐 Authentication</h2>
+        
+        <div class="endpoint">
+            <span class="method post">POST</span> /api/auth/register
+            <button onclick="testAuth('register')">Testar Registro</button>
+            <div id="result-auth-register" class="result"></div>
+        </div>
+
+        <div class="endpoint">
+            <span class="method post">POST</span> /api/auth/login
+            <button onclick="testAuth('login')">Testar Login</button>
+            <div id="result-auth-login" class="result"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔑 Password Reset</h2>
+        
+        <div class="endpoint">
+            <span class="method post">POST</span> /api/password-reset/forgot-password
+            <button onclick="testPasswordReset('forgot')">Testar Forgot Password</button>
+            <div id="result-forgot" class="result"></div>
+        </div>
+
+        <div class="endpoint">
+            <span class="method post">POST</span> /api/password-reset/reset-password
+            <button onclick="testPasswordReset('reset')">Testar Reset Password</button>
+            <div id="result-reset" class="result"></div>
+        </div>
+
+        <div class="endpoint">
+            <span class="method get">GET</span> /api/password-reset/reset-password/validate/{token}
+            <button onclick="testPasswordReset('validate')">Testar Validate Token</button>
+            <div id="result-validate" class="result"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🏋️‍♂️ Workouts & Exercises</h2>
+        
+        <div class="endpoint">
+            <span class="method get">GET</span> /api/workouts/exercises
+            <button onclick="testAPI('GET', '/api/workouts/exercises', true)">Testar Exercises</button>
+            <div id="result-exercises" class="result"></div>
+        </div>
+
+        <div class="endpoint">
+            <span class="method get">GET</span> /api/workouts/templates
+            <button onclick="testAPI('GET', '/api/workouts/templates', true)">Testar Templates</button>
+            <div id="result-templates" class="result"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>👥 Users & Profiles</h2>
+        
+        <div class="endpoint">
+            <span class="method get">GET</span> /api/users/profile
+            <button onclick="testAPI('GET', '/api/users/profile', true)">Testar Profile</button>
+            <div id="result-profile" class="result"></div>
+        </div>
+
+        <div class="endpoint">
+            <span class="method get">GET</span> /api/trainers/dashboard
+            <button onclick="testAPI('GET', '/api/trainers/dashboard', true)">Testar Trainer Dashboard</button>
+            <div id="result-trainer" class="result"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🥗 Nutrition</h2>
+        
+        <div class="endpoint">
+            <span class="method get">GET</span> /api/nutrition/analysis-history
+            <button onclick="testAPI('GET', '/api/nutrition/analysis-history', true)">Testar Nutrition History</button>
+            <div id="result-nutrition" class="result"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📊 Analytics</h2>
+        
+        <div class="endpoint">
+            <span class="method get">GET</span> /api/analytics/overview
+            <button onclick="testAPI('GET', '/api/analytics/overview', true)">Testar Analytics</button>
+            <div id="result-analytics" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:3000';
+
+        async function testAPI(method, endpoint, requiresAuth = false, body = null) {
+            const fullUrl = BASE_URL + endpoint;
+            const resultId = 'result-' + endpoint.replace(/[\/\-:]/g, '').toLowerCase();
+            const resultElement = document.getElementById(resultId) || 
+                                document.getElementById('result-' + endpoint.split('/').pop());
+
+            if (!resultElement) {
+                console.error('Result element not found for:', endpoint);
+                return;
+            }
+
+            try {
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                };
+
+                if (requiresAuth) {
+                    // Para testes com auth, usamos um token fictício
+                    options.headers['Authorization'] = 'Bearer fake_token_for_testing';
+                }
+
+                if (body) {
+                    options.body = JSON.stringify(body);
+                }
+
+                console.log('Testing:', method, fullUrl);
+                
+                const response = await fetch(fullUrl, options);
+                const data = await response.text();
+                
+                let parsedData;
+                try {
+                    parsedData = JSON.parse(data);
+                } catch {
+                    parsedData = data;
+                }
+
+                const result = {
+                    status: response.status,
+                    statusText: response.statusText,
+                    url: fullUrl,
+                    data: parsedData
+                };
+
+                resultElement.textContent = JSON.stringify(result, null, 2);
+                resultElement.className = `result ${response.ok ? 'success' : 'error'}`;
+
+            } catch (error) {
+                resultElement.textContent = `Erro: ${error.message}`;
+                resultElement.className = 'result error';
+            }
+        }
+
+        async function testAuth(type) {
+            const bodies = {
+                register: {
+                    email: 'test@example.com',
+                    password: 'password123',
+                    first_name: 'Test',
+                    last_name: 'User',
+                    user_type: 'athlete'
+                },
+                login: {
+                    email: 'trainer@example.com',
+                    password: 'trainer123'
+                }
+            };
+
+            await testAPI('POST', `/api/auth/${type}`, false, bodies[type]);
+        }
+
+        async function testPasswordReset(type) {
+            const endpoints = {
+                forgot: '/api/password-reset/forgot-password',
+                reset: '/api/password-reset/reset-password',
+                validate: '/api/password-reset/reset-password/validate/test_token'
+            };
+
+            const bodies = {
+                forgot: { email: 'test@example.com' },
+                reset: { token: 'test_token', password: 'newPassword123' }
+            };
+
+            const method = type === 'validate' ? 'GET' : 'POST';
+            await testAPI(method, endpoints[type], false, bodies[type]);
+        }
+
+        // Auto-test health on load
+        window.addEventListener('load', () => {
+            testAPI('GET', '/health');
+        });
+    </script>
+</body>
+</html>

@@ -27,9 +27,7 @@ class AppTheme {
       primary: primaryColor,
       secondary: secondaryColor,
       error: errorColor,
-      background: lightBackground,
       surface: lightSurface,
-      onBackground: lightOnBackground,
       onSurface: lightOnSurface,
     ),
     textTheme: GoogleFonts.interTextTheme().apply(
@@ -87,9 +85,7 @@ class AppTheme {
       primary: primaryColor,
       secondary: secondaryColor,
       error: errorColor,
-      background: darkBackground,
       surface: darkSurface,
-      onBackground: darkOnBackground,
       onSurface: darkOnSurface,
     ),
     textTheme: GoogleFonts.interTextTheme(

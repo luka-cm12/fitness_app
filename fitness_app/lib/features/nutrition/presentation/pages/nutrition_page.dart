@@ -1,17 +1,42 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/bottom_navigation.dart';
 import 'food_analysis_page.dart';
 import 'food_analysis_history_page.dart';
+import '../../../../core/providers/auth_provider.dart';
+import '../../../../core/models/user_model.dart';
 
-class NutritionPage extends StatelessWidget {
+class NutritionPage extends ConsumerWidget {
   const NutritionPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Nutrição'),
         actions: [
+          // Indicador do tipo de usuário para debug
+          if (user != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: Chip(
+                label: Text(
+                  user.userType == UserType.athlete
+                      ? 'Atleta'
+                      : user.userType == UserType.trainer
+                          ? 'Treinador'
+                          : 'Nutricionista',
+                  style: const TextStyle(fontSize: 12),
+                ),
+                backgroundColor: user.userType == UserType.athlete
+                    ? Colors.green.shade100
+                    : user.userType == UserType.trainer
+                        ? Colors.blue.shade100
+                        : Colors.orange.shade100,
+              ),
+            ),
           IconButton(
             onPressed: () => _navigateToHistory(context),
             icon: const Icon(Icons.history),
@@ -19,195 +44,365 @@ class NutritionPage extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Header
-            Card(
+      body: user == null
+          ? const Center(child: CircularProgressIndicator())
+          : _buildContent(context, user),
+      bottomNavigationBar: const BottomNavigation(),
+    );
+  }
+
+  Widget _buildContent(BuildContext context, User user) {
+    switch (user.userType) {
+      case UserType.athlete:
+        return _buildAthleteInterface(context);
+      case UserType.trainer:
+        return _buildTrainerInterface(context);
+      case UserType.nutritionist:
+        return _buildNutritionistInterface(context);
+    }
+  }
+
+  Widget _buildAthleteInterface(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Mensagem informativa para atletas
+          Card(
+            color: Colors.green.shade50,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, color: Colors.green.shade700),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Como atleta, você pode fotografar seus pratos para análise nutricional automática com IA. Apenas nutricionistas podem criar planos alimentares.',
+                      style: TextStyle(
+                        color: Colors.green.shade700,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Header específico para atleta
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.camera_alt,
+                    size: 64,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Análise de Alimentos',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Fotografe seus pratos e acompanhe sua alimentação!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Análise de foto - funcionalidade principal para atletas
+          Card(
+            child: InkWell(
+              onTap: () => _navigateToFoodAnalysis(context),
+              borderRadius: BorderRadius.circular(8),
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
                   children: [
-                    Icon(
-                      Icons.restaurant,
-                      size: 64,
-                      color: Theme.of(context).primaryColor,
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                      child: const Icon(
+                        Icons.camera_alt,
+                        size: 40,
+                        color: Colors.blue,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Análise Nutricional',
-                      style:
-                          Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                      textAlign: TextAlign.center,
+                      'Fotografar Refeição',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Descubra as informações nutricionais dos seus pratos através de fotos!',
+                      'Tire uma foto da sua comida e receba análise nutricional completa',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey),
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _navigateToFoodAnalysis(context),
+                        icon: const Icon(Icons.camera_alt),
+                        label: const Text('Fotografar Agora'),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
+          ),
 
-            const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
-            // Análise de foto - destaque principal
-            Card(
-              child: InkWell(
-                onTap: () => _navigateToFoodAnalysis(context),
-                borderRadius: BorderRadius.circular(8),
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(50),
-                        ),
-                        child: const Icon(
-                          Icons.camera_alt,
-                          size: 40,
-                          color: Colors.blue,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Analisar Foto do Prato',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Tire uma foto da sua comida e receba informações detalhadas sobre calorias, proteínas e carboidratos',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Container(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () => _navigateToFoodAnalysis(context),
-                          icon: const Icon(Icons.camera_alt),
-                          label: const Text('Analisar Agora'),
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+          // Funcionalidades limitadas para atletas
+          Row(
+            children: [
+              Expanded(
+                child: _buildFeatureCard(
+                  context,
+                  'Meu Histórico',
+                  'Minhas análises',
+                  Icons.history,
+                  Colors.green,
+                  () => _navigateToHistory(context),
                 ),
               ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Outras funcionalidades
-            Row(
-              children: [
-                Expanded(
-                  child: _buildFeatureCard(
-                    context,
-                    'Histórico',
-                    'Ver análises anteriores',
-                    Icons.history,
-                    Colors.green,
-                    () => _navigateToHistory(context),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildFeatureCard(
-                    context,
-                    'Planos',
-                    'Planos nutricionais',
-                    Icons.assignment,
-                    Colors.orange,
-                    () => _showComingSoon(context),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            Row(
-              children: [
-                Expanded(
-                  child: _buildFeatureCard(
-                    context,
-                    'Diário',
-                    'Diário alimentar',
-                    Icons.book,
-                    Colors.purple,
-                    () => _showComingSoon(context),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildFeatureCard(
-                    context,
-                    'Receitas',
-                    'Receitas saudáveis',
-                    Icons.menu_book,
-                    Colors.red,
-                    () => _showComingSoon(context),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-
-            // Informações adicionais
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          color: Theme.of(context).primaryColor,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Como Funciona',
-                          style:
-                              Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    _buildInfoItem('1. Tire uma foto do seu prato'),
-                    _buildInfoItem('2. Nossa IA analisa a imagem'),
-                    _buildInfoItem(
-                        '3. Receba informações nutricionais detalhadas'),
-                    _buildInfoItem('4. Acompanhe seu histórico e progresso'),
-                  ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildFeatureCard(
+                  context,
+                  'Meu Plano',
+                  'Plano nutricional',
+                  Icons.assignment,
+                  Colors.orange,
+                  () => _showAthleteOnlyFeature(context, 'Plano Nutricional'),
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
-      bottomNavigationBar: const BottomNavigation(),
+    );
+  }
+
+  Widget _buildNutritionistInterface(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header para nutricionistas
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.restaurant,
+                    size: 64,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Gestão Nutricional',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Gerencie planos nutricionais e acompanhe seus pacientes',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Funcionalidades completas para nutricionistas
+          Row(
+            children: [
+              Expanded(
+                child: _buildFeatureCard(
+                  context,
+                  'Criar Dieta',
+                  'Novos planos nutricionais',
+                  Icons.add_circle,
+                  Colors.blue,
+                  () => _showComingSoon(context),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildFeatureCard(
+                  context,
+                  'Pacientes',
+                  'Gerenciar pacientes',
+                  Icons.people,
+                  Colors.green,
+                  () => _showComingSoon(context),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          Row(
+            children: [
+              Expanded(
+                child: _buildFeatureCard(
+                  context,
+                  'Análise',
+                  'Análise de alimentos',
+                  Icons.camera_alt,
+                  Colors.purple,
+                  () => _navigateToFoodAnalysis(context),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildFeatureCard(
+                  context,
+                  'Receitas',
+                  'Biblioteca de receitas',
+                  Icons.menu_book,
+                  Colors.orange,
+                  () => _showComingSoon(context),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTrainerInterface(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header para treinadores
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.fitness_center,
+                    size: 64,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Nutrição - Visão Treinador',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Acompanhe a alimentação dos seus atletas',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Funcionalidades limitadas para treinadores
+          Row(
+            children: [
+              Expanded(
+                child: _buildFeatureCard(
+                  context,
+                  'Ver Relatórios',
+                  'Relatórios nutricionais',
+                  Icons.bar_chart,
+                  Colors.blue,
+                  () => _showComingSoon(context),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildFeatureCard(
+                  context,
+                  'Atletas',
+                  'Progresso nutricional',
+                  Icons.people,
+                  Colors.green,
+                  () => _showComingSoon(context),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          Card(
+            color: Colors.amber.shade50,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: Colors.amber.shade700,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Como treinador, você pode acompanhar o progresso nutricional dos atletas, mas apenas nutricionistas podem criar planos alimentares.',
+                      style: TextStyle(
+                        color: Colors.amber.shade700,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -263,25 +458,13 @@ class NutritionPage extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoItem(String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(
-            Icons.check_circle,
-            size: 16,
-            color: Colors.green,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(fontSize: 14),
-            ),
-          ),
-        ],
+  void _showAthleteOnlyFeature(BuildContext context, String featureName) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+            '$featureName: Consulte seu nutricionista para mais informações'),
+        duration: const Duration(seconds: 3),
+        backgroundColor: Colors.blue,
       ),
     );
   }

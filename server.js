@@ -19,6 +19,7 @@ import subscriptionRoutes from './routes/subscriptions.js';
 import analyticsRoutes from './routes/analytics.js';
 import paymentRoutes from './routes/payments.js';
 import passwordResetRoutes from './routes/password-reset.js';
+import notificationRoutes from './routes/notifications.js';
 
 // Middleware imports
 import { errorHandler } from './middleware/errorHandler.js';
@@ -33,10 +34,21 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginEmbedderPolicy: false,
+}));
+
+// CORS configuration - mais permissivo para desenvolvimento
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3001',
-  credentials: true
+  origin: [
+    'http://localhost:3001',
+    'http://localhost:3000', 
+    'http://127.0.0.1:3001',
+    'http://127.0.0.1:3000'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Rate limiting
@@ -52,6 +64,9 @@ app.use(compression());
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Serve static files (for uploaded images)
+app.use('/uploads', express.static('uploads'));
 
 // Swagger configuration
 const swaggerOptions = {
@@ -104,15 +119,20 @@ app.use('/api/nutrition', authenticateToken, nutritionRoutes);
 app.use('/api/subscriptions', authenticateToken, subscriptionRoutes);
 app.use('/api/analytics', authenticateToken, analyticsRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/notifications', authenticateToken, notificationRoutes);
 
 // Error handling
 app.use(errorHandler);
 
 // 404 handler
 app.use('*', (req, res) => {
+  console.log(`❌ Route not found: ${req.method} ${req.originalUrl}`);
+  console.log(`Headers:`, req.headers);
   res.status(404).json({
     success: false,
-    message: 'Route not found'
+    message: 'Route not found',
+    requestedRoute: `${req.method} ${req.originalUrl}`,
+    timestamp: new Date().toISOString()
   });
 });
 

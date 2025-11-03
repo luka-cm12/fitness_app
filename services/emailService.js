@@ -123,56 +123,7 @@ class EmailService {
     }
   }
 
-  // Send password reset email
-  static async sendPasswordResetEmail(userEmail, userName, resetToken) {
-    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
-    
-    const msg = {
-      to: userEmail,
-      from: {
-        email: this.FROM_EMAIL,
-        name: this.FROM_NAME,
-      },
-      subject: '🔐 Redefinir Senha - Fitness SaaS',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: #FF6B6B; padding: 30px; text-align: center; color: white;">
-            <h1 style="margin: 0;">🔐 Redefinir Senha</h1>
-          </div>
-          
-          <div style="padding: 30px; background: #f8f9fa;">
-            <h2 style="color: #333;">Olá ${userName}!</h2>
-            
-            <p style="color: #666; font-size: 16px;">
-              Recebemos uma solicitação para redefinir sua senha. Clique no botão abaixo para criar uma nova senha:
-            </p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetUrl}" 
-                 style="background: #FF6B6B; color: white; padding: 15px 30px; 
-                        text-decoration: none; border-radius: 5px; font-weight: bold;">
-                Redefinir Senha
-              </a>
-            </div>
-            
-            <div style="background: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107;">
-              <p style="color: #856404; margin: 0; font-size: 14px;">
-                ⚠️ Este link expira em 1 hora. Se você não solicitou esta redefinição, ignore este email.
-              </p>
-            </div>
-          </div>
-        </div>
-      `,
-    };
 
-    try {
-      await sgMail.send(msg);
-      console.log(`✅ Password reset email sent to ${userEmail}`);
-    } catch (error) {
-      console.error(`❌ Failed to send password reset email: ${error.message}`);
-      throw error;
-    }
-  }
 
   // Send subscription notification
   static async sendSubscriptionNotification(userEmail, userName, subscriptionStatus, planName) {
@@ -296,8 +247,7 @@ class EmailService {
   }
 
   // Send password reset email
-  static async sendPasswordResetEmail(userEmail, userName, resetToken) {
-    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3001'}/#/reset-password/${resetToken}`;
+  static async sendPasswordResetEmail(userEmail, userName, resetUrl) {
     
     const msg = {
       to: userEmail,

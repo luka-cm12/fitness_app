@@ -36,12 +36,12 @@ class ModernAppBar extends ConsumerWidget implements PreferredSizeWidget {
             end: Alignment.bottomRight,
             colors: [
               Colors.white,
-              Theme.of(context).primaryColor.withOpacity(0.05),
+              Theme.of(context).primaryColor.withValues(alpha: 0.05),
             ],
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -80,14 +80,7 @@ class ModernAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 ),
               ],
             ),
-            onPressed: () {
-              // TODO: Implementar notificações
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Notificações em desenvolvimento'),
-                ),
-              );
-            },
+            onPressed: () => context.push('/notifications'),
           ),
 
           const SizedBox(width: 8),

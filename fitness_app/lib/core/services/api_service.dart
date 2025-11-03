@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:retrofit/retrofit.dart';
 
 import '../models/user_model.dart';
+import '../models/exercise_model.dart';
+import '../models/athlete_model.dart';
 import '../utils/storage_service.dart';
 
 part 'api_service.g.dart';
@@ -10,7 +12,12 @@ part 'api_service.g.dart';
 final apiServiceProvider = Provider<ApiService>((ref) {
   final dio = Dio();
 
-  // Add interceptor for authentication
+  // Configure Dio for web CORS
+  dio.options.headers['Content-Type'] = 'application/json';
+  dio.options.connectTimeout = const Duration(seconds: 30);
+  dio.options.receiveTimeout = const Duration(seconds: 30);
+
+  // Add interceptor for authentication and debugging
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) async {
@@ -18,7 +25,23 @@ final apiServiceProvider = Provider<ApiService>((ref) {
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
+        print('📡 API Request: ${options.method} ${options.uri}');
+        print('📡 Headers: ${options.headers}');
         handler.next(options);
+      },
+      onResponse: (response, handler) {
+        print(
+            '✅ API Response: ${response.statusCode} ${response.requestOptions.uri}');
+        handler.next(response);
+      },
+      onError: (DioException error, handler) {
+        print('❌ API Error: ${error.message}');
+        print('❌ Error Type: ${error.type}');
+        if (error.response != null) {
+          print('❌ Status Code: ${error.response!.statusCode}');
+          print('❌ Response Data: ${error.response!.data}');
+        }
+        handler.next(error);
       },
     ),
   );
@@ -67,7 +90,7 @@ abstract class ApiService {
   });
 
   @PUT('/athletes/workouts/{id}/complete')
-  Future<ApiResponse<void>> completeWorkout(
+  Future<HttpResponse<void>> completeWorkout(
     @Path('id') int workoutId,
     @Body() Map<String, dynamic> completionData,
   );
@@ -83,7 +106,43 @@ abstract class ApiService {
   Future<ApiResponse<List<Food>>> searchFoods(@Query('q') String query);
 
   @POST('/nutrition/log')
-  Future<ApiResponse<void>> logFood(@Body() Map<String, dynamic> foodLog);
+  Future<HttpResponse<void>> logFood(@Body() Map<String, dynamic> foodLog);
+
+  // Exercises endpoints
+  @GET('/exercises')
+  Future<ApiResponse<List<Exercise>>> getExercises({
+    @Query('page') int page = 1,
+    @Query('limit') int limit = 20,
+    @Query('category') String? category,
+    @Query('difficulty_level') String? difficultyLevel,
+    @Query('search') String? search,
+  });
+
+  @GET('/exercises/{id}')
+  Future<Exercise> getExercise(@Path('id') int id);
+
+  // Workout Template management
+  @POST('/workouts/templates')
+  Future<ApiResponse<WorkoutTemplate>> createWorkoutTemplate(
+    @Body() CreateWorkoutTemplateRequest request,
+  );
+
+  @GET('/workouts/templates/{id}')
+  Future<ApiResponse<WorkoutTemplate>> getWorkoutTemplate(@Path('id') int id);
+
+  @POST('/workouts/assign')
+  Future<ApiResponse<AssignedWorkout>> assignWorkout(
+      @Body() Map<String, dynamic> data);
+
+  // Trainer specific endpoints
+  @GET('/trainers/dashboard')
+  Future<HttpResponse<dynamic>> getTrainerDashboard();
+
+  @GET('/trainers/athletes')
+  Future<ApiResponse<List<Athlete>>> getTrainerAthletes({
+    @Query('page') int page = 1,
+    @Query('limit') int limit = 20,
+  });
 }
 
 class ApiResponse<T> {
@@ -105,56 +164,6 @@ class ApiResponse<T> {
       success: json['success'] ?? false,
       message: json['message'] ?? '',
       data: fromJsonT(json['data']),
-    );
-  }
-}
-
-// Placeholder models - these should be in separate files
-class WorkoutTemplate {
-  final int id;
-  final String name;
-  final String? description;
-  final String difficultyLevel;
-  final int durationMinutes;
-
-  WorkoutTemplate({
-    required this.id,
-    required this.name,
-    this.description,
-    required this.difficultyLevel,
-    required this.durationMinutes,
-  });
-
-  factory WorkoutTemplate.fromJson(Map<String, dynamic> json) {
-    return WorkoutTemplate(
-      id: json['id'],
-      name: json['name'],
-      description: json['description'],
-      difficultyLevel: json['difficulty_level'],
-      durationMinutes: json['duration_minutes'],
-    );
-  }
-}
-
-class AssignedWorkout {
-  final int id;
-  final String status;
-  final DateTime scheduledDate;
-  final String workoutName;
-
-  AssignedWorkout({
-    required this.id,
-    required this.status,
-    required this.scheduledDate,
-    required this.workoutName,
-  });
-
-  factory AssignedWorkout.fromJson(Map<String, dynamic> json) {
-    return AssignedWorkout(
-      id: json['id'],
-      status: json['status'],
-      scheduledDate: DateTime.parse(json['scheduled_date']),
-      workoutName: json['workout_name'],
     );
   }
 }

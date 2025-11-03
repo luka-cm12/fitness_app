@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import '../models/food_analysis_model.dart';
 import '../utils/storage_service.dart';
 
@@ -48,7 +50,7 @@ class FoodAnalysisService {
         throw Exception(errorData['message'] ?? 'Erro do servidor');
       }
     } catch (e) {
-      print('Erro ao analisar imagem: $e');
+      debugPrint('Erro ao analisar imagem: $e');
       rethrow;
     }
   }
@@ -91,7 +93,7 @@ class FoodAnalysisService {
         throw Exception(errorData['message'] ?? 'Erro do servidor');
       }
     } catch (e) {
-      print('Erro ao analisar imagem: $e');
+      debugPrint('Erro ao analisar imagem: $e');
       rethrow;
     }
   }
@@ -123,7 +125,7 @@ class FoodAnalysisService {
         throw Exception(errorData['message'] ?? 'Erro do servidor');
       }
     } catch (e) {
-      print('Erro ao buscar alimento: $e');
+      debugPrint('Erro ao buscar alimento: $e');
       rethrow;
     }
   }
@@ -158,7 +160,7 @@ class FoodAnalysisService {
         throw Exception(errorData['message'] ?? 'Erro do servidor');
       }
     } catch (e) {
-      print('Erro ao buscar histórico: $e');
+      debugPrint('Erro ao buscar histórico: $e');
       rethrow;
     }
   }
@@ -184,7 +186,107 @@ class FoodAnalysisService {
       }
       return false;
     } catch (e) {
-      print('Erro ao salvar favorito: $e');
+      debugPrint('Erro ao salvar favorito: $e');
+      return false;
+    }
+  }
+
+  // Métodos utilitários para seleção de imagens
+  Future<File?> pickImageFromGallery() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      return File(pickedFile.path);
+    }
+    return null;
+  }
+
+  Future<File?> pickImageFromCamera() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.camera);
+
+    if (pickedFile != null) {
+      return File(pickedFile.path);
+    }
+    return null;
+  }
+
+  // Validações
+  bool isValidImageFormat(String path) {
+    final extension = path.split('.').last.toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'bmp', 'webp'].contains(extension);
+  }
+
+  bool isValidImageSize(File file) {
+    final sizeInMB = file.lengthSync() / (1024 * 1024);
+    return sizeInMB <= 10; // Limite de 10MB
+  }
+
+  /// Busca histórico completo de análises do usuário
+  Future<List<FoodAnalysisModel>> getFullAnalysisHistory({
+    int page = 1,
+    int limit = 20,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    try {
+      final url = Uri.parse('$baseUrl/nutrition/analysis/history');
+      final queryParams = <String, String>{
+        'page': page.toString(),
+        'limit': limit.toString(),
+      };
+
+      if (startDate != null) {
+        queryParams['start_date'] = startDate.toIso8601String();
+      }
+      if (endDate != null) {
+        queryParams['end_date'] = endDate.toIso8601String();
+      }
+
+      final uri = url.replace(queryParameters: queryParams);
+
+      final token = await StorageService.getToken();
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        if (jsonData['success'] == true && jsonData['data'] != null) {
+          return (jsonData['data'] as List)
+              .map((item) => FoodAnalysisModel.fromJson(item))
+              .toList();
+        }
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Erro ao buscar histórico: $e');
+      return [];
+    }
+  }
+
+  /// Deleta uma análise do histórico
+  Future<bool> deleteAnalysis(int analysisId) async {
+    try {
+      final url = Uri.parse('$baseUrl/nutrition/analysis/$analysisId');
+
+      final token = await StorageService.getToken();
+      final response = await http.delete(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Erro ao deletar análise: $e');
       return false;
     }
   }

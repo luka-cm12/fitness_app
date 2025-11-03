@@ -72,6 +72,30 @@ class ProfilePage extends ConsumerWidget {
                           color: Colors.white70,
                         ),
                       ),
+                      const SizedBox(height: 16),
+                      // Edit Profile Button
+                      ElevatedButton.icon(
+                        onPressed: () => context.push('/edit-profile'),
+                        icon: const Icon(Icons.edit, color: Color(0xFF6C63FF)),
+                        label: const Text(
+                          'Editar Perfil',
+                          style: TextStyle(
+                            color: Color(0xFF6C63FF),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),

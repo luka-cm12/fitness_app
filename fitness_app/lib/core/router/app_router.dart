@@ -13,6 +13,11 @@ import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/workouts/presentation/pages/workouts_page.dart';
 import '../../features/nutrition/presentation/pages/nutrition_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
+import '../../features/profile/presentation/pages/edit_profile_page.dart';
+import '../../features/notifications/presentation/pages/notifications_page_simple.dart';
+import '../../features/settings/presentation/pages/settings_page.dart';
+import '../../features/goals/presentation/pages/goals_page.dart';
+import '../../features/analytics/presentation/pages/analytics_page.dart';
 import '../providers/auth_provider.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -102,6 +107,31 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/profile',
         name: 'profile',
         builder: (context, state) => const ProfilePage(),
+      ),
+      GoRoute(
+        path: '/edit-profile',
+        name: 'edit-profile',
+        builder: (context, state) => const EditProfilePage(),
+      ),
+      GoRoute(
+        path: '/notifications',
+        name: 'notifications',
+        builder: (context, state) => const NotificationsPageSimple(),
+      ),
+      GoRoute(
+        path: '/settings',
+        name: 'settings',
+        builder: (context, state) => const SettingsPage(),
+      ),
+      GoRoute(
+        path: '/goals',
+        name: 'goals',
+        builder: (context, state) => const GoalsPage(),
+      ),
+      GoRoute(
+        path: '/analytics',
+        name: 'analytics',
+        builder: (context, state) => const AnalyticsPage(),
       ),
     ],
   );
